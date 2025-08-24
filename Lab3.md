@@ -1,4 +1,4 @@
-Lab 3
+Lab 3: Asymptotic and Dummy Variables
 ================
 
 ## Importing your data
