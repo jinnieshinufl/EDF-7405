@@ -1,4 +1,4 @@
-Lab 2
+Lab 2: Multiple Regression Model: Assumptions and Inferences
 ================
 
 ## Importing your data
