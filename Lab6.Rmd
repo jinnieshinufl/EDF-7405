@@ -1,0 +1,181 @@
+---
+title: "Lab 6 Binary Outcome"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+### Importing your data 
+
+Let's first load the data `WAGE2.dtt`
+
+```{r mlr}
+
+# load your data and call it data 
+library(haven)
+data = read_dta('WAGE2.dta')
+
+# Descriptive statistics and the overview of the data 
+
+library(psych)
+#describe(data)
+
+
+# Let's plot the wage distribution (`wage`)
+
+```
+
+### Let's create a multiple regression model 
+
+- DV: wage_binary (will be modified to 1=high income, 0=low income)
+- IV: educ sibs meduc feduc 
+
+```{r mlr2}
+# Let's get an average wage first 
+mean(data$wage)
+```
+
+### Assumption Checking 
+# Assuming model_logit is already fitted with glm(..., family = binomial)
+# and model_data is your cleaned dataset (no missing values)
+```{r}
+# 1. Check Binary Outcome
+# wage > average (1=high income) otherwise low income 
+data$wage_binary <- ### YOUR CODE HERE ###
+  
+table(model_data$wage_binary)  # Should have two levels: 0 and 1
+
+# 2. Multicollinearity - VIF should be < 5 (or < 10 as a relaxed rule)
+library(car)
+vif(model_logit)
+
+# 3. Influential observations - Cook's distance and leverage
+influence_measures <- influence.measures(model_logit)
+
+# Plot Cook’s Distance
+plot(model_logit, which = 4, cook.levels = 0.5)  # Default cook.levels = 0.5
+
+# Identify all the influential points
+cooksD <- cooks.distance(model_logit)
+influential <- which(cooksD > (4 / nrow(model_data)))
+influential
+
+```
+
+## model building (1) - original data
+```{r}
+model_logit <- glm(wage_binary ~ educ + sibs + meduc + feduc, 
+                   data = data, 
+                   family = binomial(link = "logit")) 
+
+summary(model_logit)
+
+```
+
+## model building (2) - remove the influential points
+```{r}
+model_logit_no_outliers <- glm(wage_binary ~ educ + sibs + meduc + feduc, 
+                               data = model_data[-influential, ], 
+                               family = binomial)
+summary(model_logit_no_outliers)
+
+```
+
+## evaluate the coefficients 
+Be aware, that the output of the logistic model is on link-scale (logit). Thus, the numerical output of the model corresponds to the log-odds. For convenience let us write down the logistic regression model with the calculated intercept and coefficient:
+
+```{r test1}
+summary(model_logit)$coefficients
+
+```
+
+```{r test2}
+exp(coefficients(model_logit))
+
+```
+
+#### confidence interval (coefficients )
+
+```{r robustse}
+confint.default(model_logit)
+```
+
+## Goodness-of-Fit    
+```{r q4}
+deviance(model_logit)
+null.deviance <- with(model_logit, null.deviance)
+residual.deviance <- with(model_logit, deviance)
+paste("Null deviance:", null.deviance)
+paste("Residual deviance:", residual.deviance)
+
+#Pseudo R-squared score 
+#install.packages('pscl')
+library(pscl)
+pR2(model_logit)
+```
+
+## Model Evaluation: Confusion Matrix, Precision, Recall
+
+```{r evaluation}
+# Remove rows with missing values used in the model
+model_data <- na.omit(data[, c("wage_binary", "educ", "sibs", "meduc", "feduc")])
+
+# Fit model again with cleaned data
+model_logit <- glm(wage_binary ~ educ + sibs + meduc + feduc, 
+                   data = model_data, 
+                   family = binomial(link = "logit"))
+
+# Generate predicted probabilities
+pred_probs <- predict(model_logit, type = "response")
+
+# Apply threshold of 0.5
+pred_class <- ifelse(pred_probs >= 0.5, 1, 0)
+
+# Convert to factor for caret
+pred_class <- factor(pred_class, levels = c(0,1))
+actual_class <- factor(model_data$wage_binary, levels = c(0,1))
+
+# Load caret and compute confusion matrix
+#install.packages('caret')
+library(caret)
+conf_mat <- confusionMatrix(pred_class, actual_class, positive = "1")
+conf_mat
+
+# Precision and recall
+conf_mat$byClass["Precision"]
+conf_mat$byClass["Recall"]
+```
+
+## Plotting your results 
+- This shows how each predictor affects the predicted probability, holding other variables constant.
+```{r}
+#install.packages('effects')
+# install.packages("effects")
+library(effects)
+
+plot(allEffects(model_logit))  # This gives partial effect plots for each predictor
+```
+
+#########################
+### Classrom Exercise ###
+#########################
+In this section, you will:
+> 1. Add an interaction term to your logistic regression model
+> 2. Interpret its effect on the probability of being in the high-income group
+
+```{r}
+# Step 1: Fit a Logistic Regression Model with Interaction between educ and meduc
+
+
+
+
+
+
+
+# Is the interaction effect statistically significant? 
+# What does the sign of the coefficient suggest? 
+
+``` 
