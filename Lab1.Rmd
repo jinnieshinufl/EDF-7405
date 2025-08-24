@@ -1,0 +1,171 @@
+---
+title: "Lab 1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Importing your data 
+
+Let's import the `usa` dataset which we will work on today. 
+```{r data, echo=FALSE}
+#install.packages('haven')
+library('haven')
+data3 <- read_dta('usa.dta')
+```
+
+Let's inspect the data using `head()`
+```{r print-data}
+head(data3) # head() function will only give you a short overview of your dataset
+colnames(data3)
+```
+### Check Outliers and Missing Values 
+Let's check outliers and missing values. Today we will be only using the variable `math1` and `age`. 
+```{r cleaning}
+#install.packages('psych')
+summary(data3[c('math1', 'age')])
+
+# can you get me the mean mean() and st.dev sd() for math1 and age 
+m_math <- mean(data3$math1)
+sd_math <- sd(data3$math1)
+
+m_age <- mean(data3$age)
+sd_age <- sd(data3$age)
+##############
+
+boxplot(data3$age)
+#out <- boxplot.stats(data3$age)$out
+#out
+
+out_ind <- which(data3$age %in% c(out))
+out_ind
+```
+
+### Histogram 
+Let's create a histogram for the two variables: `math1` and `age`
+
+```{r hist}
+#math1
+hist(data3$math1)
+#age
+hist(data3$age)
+
+```
+
+### Assumption 1: Linearity
+Let's check for the relationship between the two variables: `math1` and `age`
+
+```{r a1}
+# what type of statistics would i introduce here?
+cor(data3$math1, data3$age) # pearson's c
+```
+
+### Assumption 3: variance of your x variable `age`
+```{r a1}
+#age
+library(psych)
+describe(data3) # this will give you the descriptive stats for the entire dataset
+
+sd(data3$age)
+var(data3$age)
+
+```
+
+We will check for the assumptions 4 and 5 after we run the analyses. 
+
+## 1. Regression analysis: Math ~ age 
+
+### Let's create a simple linear regression: IV (age), DV (math1)
+
+```{r reg1}
+
+model1 <- lm( math1 ~ age , data = data3)
+summary(model1)
+
+# we can extract the residual 
+# what is your b0=? 668
+# what is your b1=? -12.xx
+# what is your u=? 
+hist(model1$residuals)  # histogram and compute mean 
+mean(model1$residuals)
+```
+
+### Assumption 4: normality of residual (u)
+```{r a4}
+library('olsrr')
+ols_plot_resid_qq(model1)
+ols_plot_resid_fit(model1)
+ols_plot_resid_hist(model1)
+```
+
+Let's standardize the regression coefficient (b1).
+
+- Standardization puts the coefficient n the range of -1 to 1
+- $\beta_{1} =  b_{1} * \frac{\sigma_{x}}{\sigma_{y}}$ 
+- ? 
+
+```{r std_reg}
+
+########### YOUR CODE HERE #############
+install.packages('lm.beta')
+library(lm.beta)
+lm.beta(model1)
+
+# let's check
+
+# What's the explained variance?
+
+########################################
+
+```
+## 2. Regression on a binary treatment indicator
+
+Suppose that x is coded as 1 if in treatment group and 0 if in control group. 
+Let's first load the data `JTRAIN.dtt` 
+```{r reg2}
+
+# load your data and call it b_data 
+b_data = read_dta('JTRAIN2.dta')
+
+# Descriptive statistics and the overview of the data 
+
+# run regression analysis lm1
+# dv = re78 
+# iv = age 
+
+model2 = lm(re78 ~ age, data= b_data)
+summary(model2)
+# run regression analysis lm2
+# dv = re78
+# iv = train (1 or 0)
+
+model3 = lm(re78 ~ train, data=b_data)
+summary(model3)
+
+
+
+```
+
+Let's extract the variable `train` and `re78`
+
+- y = _4.5548__ + _1.79___ * x + e
+- What is the control mean and the treatment mean?
+# how much are the trained ppl (treatment) making vs. non trained (control)
+
+y_hat (predicted earning in 1978) = 4550 + 1790 * training 
+trained = 4550 + 1790 = 6349
+non-trained = 4550
+difference = 1790
+
+```{r reg2-1}
+
+model2 = 
+summary(model2)
+
+```
+
+
+
